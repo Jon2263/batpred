@@ -98,8 +98,10 @@ GUN_FAILED = 3
 # ENUM.CHARGER_CHARG_MODE
 CHARGING_MODES = {0: "PV + Battery + Grid", 1: "PV + Battery"}
 
-# ENUM.CHARGER_WORK_MODE as the console offers it; 3 is the app's Plug & Charge
-WORK_MODES = {1: "Swipe Charge", 2: "Based on time", 3: "Plug & Charge"}
+# The console's ENUM.CHARGER_CHARGING_MODE, the options of the work_mode setting. 4 is the app's "Based on time",
+# which charges only inside charge_period (or charge_period_multi), repeated per charge_repeat (0 Daily, 1 Once).
+# Hanchu refuses settings changes while a session is open (Charging, SuspendedEVSE, SuspendedEV)
+WORK_MODES = {0: "Swipe Charge", 3: "Plug & Charge", 4: "Scheduled charging"}
 
 
 # -----------------------------------------------------------------------------
@@ -772,7 +774,15 @@ class HanchuEVAPI(ComponentBase, CarChargerControl):
         return charger.charge_enabled is not None and charger.charge_enabled != charge
 
     async def charger_control_send(self, charger, charge, car_n):
-        """Turn Charging Status on inside a window, off outside one."""
+        """Turn Charging Status on inside a window, off outside one - only when the charger is not already there.
+
+        In Swipe Charge mode, the recommended set-up, a charger with a car plugged in rests with its Charging Status
+        off and never starts by itself, so outside a window there is usually nothing to stop. Hanchu refuses a stop
+        to a charger with no session, so sending one would only fail every cycle. A charger already off is not
+        recorded as stopped by Predbat, so a release does not start it either.
+        """
+        if charger.charge_enabled is charge:
+            return
         if charge:
             self.log("Info: hanchu_ev: turning charger {} on for car {}".format(charger.sn, car_n))
             await self.transport.write_settings(charger.sn, {"charge_status": 1})

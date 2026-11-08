@@ -1410,7 +1410,8 @@ Set `hanchu_ev_control: True` to let Predbat stop and start each charger from it
 - When control is released, every charger Predbat turned off is turned back on. A charger you turned off yourself stays off.
 - A charger with no car, one that is offline, faulted or unavailable, or one whose last read failed is not commanded.
 - `switch.predbat_hanchuev_guest_charging` hands the chargers back so a visitor's car can charge - see [Guest charging](car-charging.md#guest-charging).
-- Leave the charger in Plug & Charge mode in the Hanchu app, with no charging schedule of its own.
+- Set the charger's Work Mode to **Swipe Charge** in the Hanchu app. In that mode the charger never starts a session by itself when a car is plugged in, so it rests "off", and Predbat starts each charge inside a slot - including a car plugged in halfway through one, within a minute. Hanchu's Charging Status cannot be held off on a charger with no car, so in Plug & Charge mode a car plugged in outside a slot starts charging until Predbat's next check stops it. Hanchu does not allow the work mode to be changed while a car has a session open.
+- Outside a slot only a charger that is actually charging is stopped; one already off is left alone, and is not started when control is released.
 
 #### Battery hold (hanchu_ev)
 

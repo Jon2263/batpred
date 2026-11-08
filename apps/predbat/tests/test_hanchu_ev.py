@@ -519,6 +519,26 @@ def test_control_leaves_unplugged_stale_and_user_stopped_chargers():
     print("  ✓ Unplugged, stale, unplanned and user-stopped chargers are left alone")
 
 
+def test_swipe_charge_plugged_in_mid_window():
+    """In Swipe Charge mode a plugged-in charger rests off: nothing is sent outside a window, and plugging in mid-window starts it."""
+    resting = {SN_A: (_entry(status="1"), _detail(status="1", power="0"), _settings(charge="0", work="0"))}
+    component = _loaded(PLAN_OUTSIDE, served=resting, hanchu_ev_control=True)
+    run_async(component.control_tick(CONTROL_NOW))
+    run_async(component.control_tick(CONTROL_NOW))
+    assert component.transport.writes == [], "already off, so no stop is sent"
+    assert SN_A not in component.stopped_by_predbat, "Predbat did not stop it, so a release must not start it"
+
+    unplugged = {SN_A: (_entry(status="0", gun="2"), _detail(status="0", gun="2", power="0"), _settings(charge="0", work="0"))}
+    component = _loaded(PLAN_INSIDE, served=unplugged, hanchu_ev_control=True)
+    run_async(component.control_tick(CONTROL_NOW))
+    assert component.transport.writes == [], "no car, nothing to start"
+    component.transport.chargers[SN_A] = (_entry(status="1"), _detail(status="1", power="0"), _settings(charge="0", work="0"))
+    run_async(component.run(60, False))
+    run_async(component.control_tick(CONTROL_NOW))
+    assert component.transport.writes == [(SN_A, {"charge_status": 1})], "a car plugged in mid-window is started"
+    print("  ✓ Swipe Charge: resting off, started when plugged in mid-window")
+
+
 def test_control_needs_automatic():
     """Control without automatic configuration is refused with a warning."""
     component = _make_component(hanchu_ev_control=True, automatic=False)
@@ -590,6 +610,7 @@ def test_hanchu_ev(my_predbat=None):
     test_plan_led_stop_and_release()
     test_plan_led_start_and_drift()
     test_control_leaves_unplugged_stale_and_user_stopped_chargers()
+    test_swipe_charge_plugged_in_mid_window()
     test_control_needs_automatic()
     test_battery_hold_follows_the_plan()
     test_battery_hold_follows_octopus_dispatches()

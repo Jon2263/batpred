@@ -643,6 +643,25 @@ See [Hypervolt Charger](components.md#hypervolt-charger-hypervolt) for the entit
 
 If you would rather use the Home Assistant Hypervolt integration, see [Hypervolt](devices.md#hypervolt).
 
+## Hanchu EV charger direct integration
+
+Predbat can talk directly to Hanchu EV chargers (HC-EV-AC-07K, 11K and 22K) on your Hanchu iESS account by configuring the account details in `apps.yaml`. They are the same email address and password as the Hanchu app, and the same ones **hanchu_account** uses if Predbat also runs your Hanchu inverter:
+
+```yaml
+  hanchu_ev_account: !secret hanchu_account
+  hanchu_ev_password: !secret hanchu_password
+  # Let Predbat stop and start the charger from its own car charging plan
+  #hanchu_ev_control: True
+  # Disable battery discharge to the charger inside car charging slots and Octopus dispatches
+  #hanchu_ev_battery_hold: True
+```
+
+Predbat then registers each charger as a car and sets **car_charging_energy**, **car_charging_planned**, **car_charging_plugged**, **car_charging_power** and **car_charging_now** for you. A Hanchu charger cannot report the car's state of charge, so set **car_charging_soc** from your car's own integration if you want Predbat to plan to a target.
+
+With a Hanchu battery, `hanchu_ev_battery_hold: True` sets each charger's "Disable battery discharge to EV Charger" setting from the plan: on inside a car charging slot or an Octopus Intelligent dispatch, so the car charges from the grid while the battery goes on supplying the house, and off outside one.
+
+See [Hanchu EV Charger](components.md#hanchu-ev-charger-hanchu_ev) for the entities it publishes and how Predbat-led charging behaves.
+
 ## GivEnergy Gateway OCPP EV charger
 
 When Predbat is connected to a GivEnergy Gateway that has an OCPP EV charger attached, the charger's live state is reported to Predbat over the gateway's MQTT telemetry and exposed as Home Assistant entities.

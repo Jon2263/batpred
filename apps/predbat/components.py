@@ -350,6 +350,25 @@ COMPONENT_LIST = {
         "phase": 1,
         "can_restart": True,
     },
+    "hanchu_ev": {
+        "class": "hanchu_ev.HanchuEVAPI",
+        "name": "Hanchu EV Charger",
+        # Not "predbat_hanchu_": that would also match these entities and route their events to the
+        # Hanchu inverter component, whose filter it is
+        "event_filter": "predbat_hanchuev_",
+        "args": {
+            # The Hanchu app account, the same one hanchu_account signs in with; several clients may share it
+            "account": {"required": True, "secret": True, "config": "hanchu_ev_account"},
+            "password": {"required": True, "secret": True, "config": "hanchu_ev_password"},
+            "automatic": {"required": False, "config": "hanchu_ev_automatic", "default": True},
+            "hanchu_ev_control": {"required": False, "config": "hanchu_ev_control", "default": False},
+            "poll_seconds": {"required": False, "config": "hanchu_ev_poll_seconds", "default": 60},
+            "chargers": {"required": False, "config": "hanchu_ev_chargers"},
+            "battery_hold": {"required": False, "config": "hanchu_ev_battery_hold", "default": False},
+        },
+        "phase": 1,
+        "can_restart": True,
+    },
     "fox": {
         "class": "fox.FoxAPI",
         "name": "Fox API",

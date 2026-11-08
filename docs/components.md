@@ -1349,6 +1349,87 @@ Things to know:
 
 ---
 
+### Hanchu EV Charger (hanchu_ev)
+
+Talks directly to the Hanchu iESS cloud, so it works with or without Home Assistant. It monitors every Hanchu EV charger (HC-EV-AC-07K, 11K and 22K) on your Hanchu account, can register them with Predbat as cars, can stop and start them from Predbat's car charging plan, and can switch their "Disable battery discharge to EV Charger" setting from the plan.
+
+Hanchu publishes no API for its chargers. This component uses the calls the iESS web console makes for its charger pages, so a change on Hanchu's side can break it. It signs in with the same account as the Hanchu app and the Hanchu inverter component, and the Hanchu cloud is happy with several clients signed in to one account.
+
+#### Setting it up (hanchu_ev)
+
+1. You need the email address and password of your Hanchu account, the ones you use in the Hanchu app.
+2. Put the two values in `secrets.yaml`, or reuse the ones you already have for **hanchu_account**:
+
+    ```yaml
+    hanchu_account: "you@example.com"
+    hanchu_password: "your-hanchu-password"
+    ```
+
+3. Add the component to `apps.yaml`:
+
+    ```yaml
+      hanchu_ev_account: !secret hanchu_account
+      hanchu_ev_password: !secret hanchu_password
+    ```
+
+4. Restart Predbat. Within a minute the entities below appear for every charger on the account, and the log shows the **car_charging_** settings Predbat has made for you. If sign in fails, the log says `hanchu_ev: sign in failed` and the component shows as failed.
+5. Decide who controls charging:
+
+    - **Monitoring only** (the default). Predbat sees the charger and removes car charging from its house load, but the Hanchu app, your car or your energy supplier decides when the car charges.
+    - **Predbat-led charging.** Add `hanchu_ev_control: True` and Predbat stops and starts the charger from its own car charging plan. See [Predbat-led charging](#predbat-led-charging-hanchu_ev) below.
+    - **Octopus Intelligent Go.** Hanchu chargers are not Octopus Intelligent devices, so with Octopus Intelligent your car is the device. Predbat leaves the charger alone by default, and in expert mode **switch.predbat_octopus_intelligent_charger_follows_car** has it let the car charge only during Octopus's dispatches. See [Octopus Intelligent and charger control](car-charging.md#octopus-intelligent-and-charger-control).
+
+#### What it publishes (hanchu_ev)
+
+For each charger, with `<sn>` being the charger's serial number in lower case. The entity ids start `predbat_hanchuev_` rather than `predbat_hanchu_`, so they are never confused with the inverter component's:
+
+| Entity | Description |
+| ------ | ----------- |
+| `sensor.predbat_hanchuev_<sn>_status` | The charger status as Hanchu names it: `Available`, `Preparing`, `Charging`, `SuspendedEV`, `Finishing`, `Reserved`, `Unavailable`, `Faulted` or `Unknown`. Attributes give the raw status and gun codes, online state, model, firmware, phase, voltage, current, work mode and `stale`, which is true when the last read failed |
+| `sensor.predbat_hanchuev_<sn>_power` | Charging power in W |
+| `sensor.predbat_hanchuev_<sn>_session_energy` | Energy added in the current session in kWh |
+| `binary_sensor.predbat_hanchuev_<sn>_plugged` | On while a car is on the cable, off when the charger says there is none, `unavailable` otherwise |
+| `binary_sensor.predbat_hanchuev_<sn>_charging` | On while the charger reports `Charging` |
+| `switch.predbat_hanchuev_<sn>_charging` | The app's "Charging Status": turn off to stop charging, on to let the charger charge again. With Predbat-led charging on, Predbat sets it from its plan within a minute |
+| `switch.predbat_hanchuev_<sn>_disable_battery_discharge` | The app's "Disable battery discharge to EV Charger": on stops a Hanchu battery supplying the charger while it goes on supplying the house |
+| `select.predbat_hanchuev_<sn>_charging_mode` | The app's "Charging Mode": `PV + Battery + Grid` or `PV + Battery` |
+| `number.predbat_hanchuev_<sn>_max_current` | Maximum charging current, within the charger's own range (6 to 32 A) |
+
+The settings entities appear once the charger has answered a settings read, which happens every poll.
+
+#### Automatic configuration (hanchu_ev)
+
+With `hanchu_ev_automatic` on (the default), Predbat sets **car_charging_energy**, **car_charging_planned**, **car_charging_plugged**, **car_charging_power** and **car_charging_now** to the charger entities, and raises **num_cars** to the number of chargers. Chargers are taken in serial number order, so the lowest serial is car 0, and a charger added later becomes the next car. If you have more chargers than cars, list the ones to use, in car order, with `hanchu_ev_chargers`; the others are left alone. A **car_charging_now** you have set yourself is kept.
+
+#### Predbat-led charging (hanchu_ev)
+
+Set `hanchu_ev_control: True` to let Predbat stop and start each charger from its own car charging plan. It needs `hanchu_ev_automatic`. While it is active Predbat publishes `switch.predbat_hanchuev_control`, which you can turn off to hand the chargers back at any time; read only mode does the same.
+
+- Inside a planned car charging slot, a charger whose Charging Status is off is turned on.
+- Outside a slot, a charger with a car plugged in has its Charging Status turned off.
+- When control is released, every charger Predbat turned off is turned back on. A charger you turned off yourself stays off.
+- A charger with no car, one that is offline, faulted or unavailable, or one whose last read failed is not commanded.
+- `switch.predbat_hanchuev_guest_charging` hands the chargers back so a visitor's car can charge - see [Guest charging](car-charging.md#guest-charging).
+- Leave the charger in Plug & Charge mode in the Hanchu app, with no charging schedule of its own.
+
+#### Battery hold (hanchu_ev)
+
+With `hanchu_ev_battery_hold: True`, each charger's "Disable battery discharge to EV Charger" setting follows the plan whether or not Predbat-led charging is on: it is turned on inside a planned car charging slot or a running Octopus Intelligent dispatch, and off outside one. The car then charges from the grid in the slot while the Hanchu battery keeps supplying the house, and can draw on the battery outside it. It is written only when the charger reports something different, never in read only mode, and never to a charger whose last read failed.
+
+#### Configuration Options (hanchu_ev)
+
+| Option | Type | Required | Default | Config Key | Description |
+| ------ | ---- | -------- | ------- | ---------- | ----------- |
+| `account` | String | Yes | - | `hanchu_ev_account` | Your Hanchu app email address |
+| `password` | String | Yes | - | `hanchu_ev_password` | Your Hanchu app password |
+| `automatic` | Boolean | No | `True` | `hanchu_ev_automatic` | Register the chargers with Predbat as cars |
+| `hanchu_ev_control` | Boolean | No | `False` | `hanchu_ev_control` | Let Predbat stop and start the chargers from its own plan. Requires `hanchu_ev_automatic`; released by read only mode |
+| `poll_seconds` | Integer | No | `60` | `hanchu_ev_poll_seconds` | How often the chargers are read, in whole minutes between 60 and 1800 seconds |
+| `chargers` | String or list | No | all | `hanchu_ev_chargers` | The charger serial numbers to use, in car order |
+| `battery_hold` | Boolean | No | `False` | `hanchu_ev_battery_hold` | Disable battery discharge to each charger inside car charging slots and Octopus dispatches |
+
+---
+
 ### Fox ESS API (fox)
 
 **Can be restarted:** Yes

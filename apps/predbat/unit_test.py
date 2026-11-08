@@ -340,6 +340,7 @@ from tests.test_givtcp_rest import run_givtcp_rest_tests
 from tests.test_myenergi import test_myenergi
 from tests.test_wallbox import test_wallbox
 from tests.test_hypervolt import test_hypervolt
+from tests.test_hanchu_ev import test_hanchu_ev
 from tests.test_car_charger_control import run_car_charger_control_tests
 from tests.test_component_base import test_component_base_all
 from tests.test_components import test_components_all
@@ -840,6 +841,7 @@ def main():
         ("myenergi", test_myenergi, "myenergi Zappi and Eddi comprehensive tests (normalisation, transports, publishing, auto-config, controls)", False),
         ("wallbox", test_wallbox, "Wallbox EV charger tests (transport, normalisation, publishing, auto-config, controls, plan-led charging)", False),
         ("hypervolt", test_hypervolt, "Hypervolt EV charger tests (auth, sockets, state, publishing, auto-config, controls, plan-led charging)", False),
+        ("hanchu_ev", test_hanchu_ev, "Hanchu EV charger tests (AES, normalisation, transport, publishing, auto-config, controls, plan-led charging, battery hold)", False),
         # ComponentBase lifecycle tests
         ("component_base", test_component_base_all, "ComponentBase tests (all)", False),
         ("components", test_components_all, "Components registry tests (all)", False),

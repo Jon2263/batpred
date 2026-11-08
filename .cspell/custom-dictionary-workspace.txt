@@ -89,6 +89,7 @@ ceyyyy
 CGNAT
 Chae
 Chaf
+CHARG
 chargedischarge
 chargeenergytotal
 chargefreeze
@@ -230,6 +231,7 @@ etoday
 etok
 euids
 EVAC
+EVAPI
 evc
 EVDC
 evergen
@@ -246,6 +248,7 @@ fentry
 figsize
 finaliser
 Fingerbot
+FIPS
 firstparty
 flextras
 fline
@@ -305,6 +308,7 @@ hainterface
 halfhourly
 hanchu
 hanchuess
+hanchuev
 hanres
 HAOS
 harvi
@@ -586,6 +590,7 @@ Qwen
 randn
 rany2
 rarr
+RCON
 reactivepower
 readback
 readbacks
@@ -623,6 +628,7 @@ Rvrt
 sapm
 saverestore
 savez
+SBOX
 scalarstring
 scalings
 searr
@@ -632,6 +638,7 @@ selectattr
 Selfrun
 Selfuse
 semodbus
+Sems
 Sergoe
 sess
 setattr
@@ -734,6 +741,7 @@ tmrw
 tojson
 topbar
 tottime
+traceback
 trapezoidally
 trapz
 Trefor
@@ -814,6 +822,7 @@ xload
 xrtkq
 xtest
 xticks
+xtime
 xxabcdefyy
 yaxis
 yaxistooltip
@@ -825,4 +834,5 @@ zappi
 zappis
 zcat
 zigbee
+zipcode
 zoneinfo
